@@ -221,11 +221,11 @@ class VecNormalize(VecEnvWrapper):
     def step_wait(self) -> VecEnvStepReturn:
         """
         Apply sequence of actions to sequence of environments
-        actions -> (observations, rewards, dones)
+        actions -> (observations, rewards, terminated, truncated)
 
-        where ``dones`` is a boolean vector indicating whether each element is new.
+        where ``terminated`` and ``truncated`` are boolean vectors.
         """
-        obs, rewards, dones, infos = self.venv.step_wait()
+        obs, rewards, terminated, truncated, infos = self.venv.step_wait()
         self.old_obs = obs
         self.old_reward = rewards
 
@@ -242,6 +242,8 @@ class VecNormalize(VecEnvWrapper):
             self._update_reward(rewards)
         rewards = self.normalize_reward(rewards)
 
+        dones = np.logical_or(terminated, truncated)
+
         # Normalize the terminal observations
         for idx, done in enumerate(dones):
             if not done:
@@ -250,7 +252,7 @@ class VecNormalize(VecEnvWrapper):
                 infos[idx]["terminal_observation"] = self.normalize_obs(infos[idx]["terminal_observation"])
 
         self.returns[dones] = 0
-        return obs, rewards, dones, infos
+        return obs, rewards, terminated, truncated, infos
 
     def _update_reward(self, reward: np.ndarray) -> None:
         """Update reward normalization statistics."""
@@ -334,7 +336,7 @@ class VecNormalize(VecEnvWrapper):
         Reset all environments
         :return: first observation of the episode
         """
-        obs = self.venv.reset()
+        obs, info = self.venv.reset()
         self.old_obs = obs
         self.returns = np.zeros(self.num_envs)
         if self.training and self.norm_obs:
@@ -343,7 +345,7 @@ class VecNormalize(VecEnvWrapper):
                     self.obs_rms[key].update(obs[key])
             else:
                 self.obs_rms.update(obs)
-        return self.normalize_obs(obs)
+        return self.normalize_obs(obs), info
 
     @staticmethod
     def load(load_path: str, venv: VecEnv) -> "VecNormalize":
