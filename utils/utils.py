@@ -225,42 +225,6 @@ def configure_logger(
     return configure(save_path, format_strings=format_strings)
 
 
-# def check_for_correct_spaces(env: GymEnv, observation_space: spaces.Space, action_space: spaces.Space) -> None:
-#     """
-#     Checks that the environment has same spaces as provided ones. Used by BaseAlgorithm to check if
-#     spaces match after loading the model with given env.
-#     Checked parameters:
-#     - observation_space
-#     - action_space
-
-#     :param env: Environment to check for valid spaces
-#     :param observation_space: Observation space to check against
-#     :param action_space: Action space to check against
-#     """
-#     if observation_space != env.observation_space:
-#         raise ValueError(f"Observation spaces do not match: {observation_space} != {env.observation_space}")
-#     if action_space != env.action_space:
-#         raise ValueError(f"Action spaces do not match: {action_space} != {env.action_space}")
-
-
-# def check_shape_equal(space1: spaces.Space, space2: spaces.Space) -> None:
-#     """
-#     If the spaces are Box, check that they have the same shape.
-
-#     If the spaces are Dict, it recursively checks the subspaces.
-
-#     :param space1: Space
-#     :param space2: Other space
-#     """
-#     if isinstance(space1, spaces.Dict):
-#         assert isinstance(space2, spaces.Dict), "spaces must be of the same type"
-#         assert space1.spaces.keys() == space2.spaces.keys(), "spaces must have the same keys"
-#         for key in space1.spaces.keys():
-#             check_shape_equal(space1.spaces[key], space2.spaces[key])
-#     elif isinstance(space1, spaces.Box):
-#         assert space1.shape == space2.shape, "spaces must have the same shape"
-
-
 def is_vectorized_box_observation(observation: np.ndarray, observation_space: spaces.Box) -> bool:
     """
     For box observation type, detects and validates the shape,
@@ -436,51 +400,6 @@ def get_parameters_by_name(model: th.nn.Module, included_names: Iterable[str]) -
         that matches the queried names.
     """
     return [param for name, param in model.state_dict().items() if any([key in name for key in included_names])]
-
-
-# def zip_strict(*iterables: Iterable) -> Iterable:
-#     r"""
-#     ``zip()`` function but enforces that iterables are of equal length.
-#     Raises ``ValueError`` if iterables not of equal length.
-#     Code inspired by Stackoverflow answer for question #32954486.
-
-#     :param \*iterables: iterables to ``zip()``
-#     """
-#     # As in Stackoverflow #32954486, use
-#     # new object for "empty" in case we have
-#     # Nones in iterable.
-#     sentinel = object()
-#     for combo in zip_longest(*iterables, fillvalue=sentinel):
-#         if sentinel in combo:
-#             raise ValueError("Iterables have different lengths")
-#         yield combo
-
-
-# def polyak_update(
-#     params: Iterable[th.Tensor],
-#     target_params: Iterable[th.Tensor],
-#     tau: float,
-# ) -> None:
-#     """
-#     Perform a Polyak average update on ``target_params`` using ``params``:
-#     target parameters are slowly updated towards the main parameters.
-#     ``tau``, the soft update coefficient controls the interpolation:
-#     ``tau=1`` corresponds to copying the parameters to the target ones whereas nothing happens when ``tau=0``.
-#     The Polyak update is done in place, with ``no_grad``, and therefore does not create intermediate tensors,
-#     or a computation graph, reducing memory cost and improving performance.  We scale the target params
-#     by ``1-tau`` (in-place), add the new weights, scaled by ``tau`` and store the result of the sum in the target
-#     params (in place).
-#     See https://github.com/DLR-RM/stable-baselines3/issues/93
-
-#     :param params: parameters to use to update the target params
-#     :param target_params: parameters to update
-#     :param tau: the soft update coefficient ("Polyak update", between 0 and 1)
-#     """
-#     with th.no_grad():
-#         # zip does not raise an exception if length of parameters does not match.
-#         for param, target_param in zip_strict(params, target_params):
-#             target_param.data.mul_(1 - tau)
-#             th.add(target_param.data, param.data, alpha=tau, out=target_param.data)
 
 
 def obs_as_tensor(
